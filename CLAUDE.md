@@ -16,7 +16,7 @@ QupZilla 2.3.0 web browser ported to legacy webOS (HP TouchPad / Pre3, ARMv7 Cor
 - `toolchains/gcc-linaro/` - Linaro GCC ARM cross-compiler toolchain
 - `build-arm/` - Build output directory for ARM cross-compilation
 - `package-staging/` - Staging area for webOS IPK package creation
-- `packages/` - Pre-built .ipk packages for webOS installation
+- `related-packages/` - Pre-built .ipk packages for webOS installation
 
 ## Build Environment
 
@@ -32,7 +32,7 @@ The build uses a hybrid approach:
 
 ## Runtime Dependencies (webOS Device)
 
-All packages in `packages/` must be installed on the device:
+All packages in `related-packages/` must be installed on the device:
 - `com.nizovn.glibc` - Modern glibc (webOS ships ancient one)
 - `com.nizovn.qt5` - Qt 5.9.7 runtime libraries
 - `com.nizovn.qt5qpaplugins` - QPA plugins for webOS
@@ -42,6 +42,21 @@ All packages in `packages/` must be installed on the device:
 - `org.webosinternals.dbus` - D-Bus
 
 ## Building QupZilla for webOS
+
+### Using Build Scripts (Recommended)
+
+```bash
+# Build only
+./build-arm.sh
+
+# Build and package (prompts for device install)
+./build-and-package.sh
+
+# Clean build output for fresh build
+./build-arm.sh clean
+```
+
+### Manual Build
 
 ```bash
 # Create build directory

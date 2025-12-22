@@ -58,6 +58,11 @@ Extract Qt5 ARM libraries from the IPK package:
 ./build-arm.sh
 ```
 
+To clean build output for a fresh build:
+```bash
+./build-arm.sh clean
+```
+
 Or manually:
 
 ```bash
@@ -70,6 +75,12 @@ make -j$(nproc)
 
 ### 4. Package and Deploy
 
+Using the build-and-package script (recommended):
+```bash
+./build-and-package.sh
+```
+
+Or manually:
 ```bash
 # Copy binaries to staging
 cp source/qupzilla/bin/qupzilla package-staging/com.nizovn.qupzilla/bin/
