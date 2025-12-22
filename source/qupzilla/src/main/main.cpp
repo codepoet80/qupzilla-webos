@@ -235,9 +235,13 @@ int main(int argc, char* argv[])
 #if defined(PORTABLE_BUILD) && defined(Q_OS_LINUX)
     logMsg("[STARTUP] Setting webOS environment variables");
     // webOS-specific environment setup - must be set before QApplication
-    qputenv("QMLSCENE_DEVICE", "softwarecontext");
-    qputenv("QT_QUICK_BACKEND", "software");
-    qputenv("QTWEBENGINE_CHROMIUM_FLAGS", "--disable-gpu --disable-gpu-compositing --enable-software-rasterizer");
+    // GPU acceleration with safe performance flags
+    qputenv("QTWEBENGINE_CHROMIUM_FLAGS",
+        "--use-gl=egl "
+        "--enable-gpu-rasterization "
+        "--enable-native-gpu-memory-buffers "
+        "--num-raster-threads=2 "
+        "--disable-background-timer-throttling");
     qputenv("QT_QPA_FONTDIR", "/usr/share/fonts");
     qputenv("QT_QPA_WEBOS_PHYSICAL_WIDTH", "197");
     qputenv("QT_QPA_WEBOS_PHYSICAL_HEIGHT", "148");

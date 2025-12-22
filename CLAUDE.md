@@ -103,7 +103,6 @@ The working `appinfo.json` configuration (keep minimal exports):
   "keywords": ["browser"],
   "qt5sdk": {
     "exports": [
-      "QMLSCENE_DEVICE=softwarecontext",
       "QT_QPA_WEBOS_AUTOROTATE=1",
       "QT_QPA_WEBOS_RIGHT_CLICK_ON_LONG_TAP=1"
     ]
@@ -112,18 +111,27 @@ The working `appinfo.json` configuration (keep minimal exports):
 }
 ```
 
-**Important**: Keep `qt5sdk.exports` minimal. Additional environment variables are set in `main.cpp` instead.
+**Important**: Keep `qt5sdk.exports` minimal. GPU and rendering configuration is set in `main.cpp` via `QTWEBENGINE_CHROMIUM_FLAGS`. Do NOT set `QMLSCENE_DEVICE` or `QT_QUICK_BACKEND` here as they conflict with GPU acceleration.
 
 ## Key Modifications Made for webOS
 
 ### 1. Environment Variables (main.cpp)
 Set before QApplication creation for PORTABLE_BUILD on Linux:
-- `QMLSCENE_DEVICE=softwarecontext` - Software rendering
-- `QT_QUICK_BACKEND=software` - Software Qt Quick backend
-- `QTWEBENGINE_CHROMIUM_FLAGS=--disable-gpu --disable-gpu-compositing --enable-software-rasterizer`
+- `QTWEBENGINE_CHROMIUM_FLAGS` - GPU acceleration flags (see below)
 - `QT_QPA_FONTDIR=/usr/share/fonts` - Font discovery via fontconfig
 - `QT_QPA_WEBOS_PHYSICAL_WIDTH=197` / `HEIGHT=148` - Physical screen size (mm)
 - `SSL_CERT_FILE=/media/cryptofs/apps/usr/palm/applications/com.nizovn.cacert/files/cert.pem`
+
+**GPU Acceleration Configuration** (PowerVR SGX540):
+```cpp
+qputenv("QTWEBENGINE_CHROMIUM_FLAGS",
+    "--use-gl=egl "                         // OpenGL ES via EGL
+    "--enable-gpu-rasterization "           // GPU page painting
+    "--enable-native-gpu-memory-buffers "   // Efficient GPU memory
+    "--num-raster-threads=2 "               // Parallel rasterization (dual-core)
+    "--disable-background-timer-throttling" // Responsive JS timers
+);
+```
 
 ### 2. OpenGL ES 2 Linking
 Changed `sdk/qt5-arm/mkspecs/modules/qt_lib_gui_private.pri`:
@@ -378,41 +386,63 @@ The following have been tested and cause crashes or hangs. **NEVER use these**:
 
 5. **Using `palm-launch -c` to kill PDK apps**: This command does not work for PDK apps like QupZilla. Use `echo "killall qupzilla" | novacom run file://bin/sh` instead.
 
+6. **GPU compositing flags that hide the UI**: The following Chromium flags cause the Qt widget layer (toolbar, navigation bar) to disappear behind the web content. **NEVER use these**:
+   - `--enable-zero-copy` - Breaks layer compositing
+   - `--disable-gpu-vsync` - Causes rendering issues
+   - `--ignore-gpu-blocklist` - Forces unsupported GPU features
+   - `--enable-accelerated-2d-canvas` - Affects compositing
+   - `QSG_RENDER_LOOP=basic` - Breaks Qt widget rendering
+
+   These flags affect how Chromium composites layers with Qt widgets. The PowerVR SGX540 doesn't properly support the layer ordering these flags require.
+
 ## Future: Web Engine Upgrade
 
 QtWebEngine in Qt 5.9 is based on Chromium ~56. Upgrading options:
 - Qt 5.12 LTS (Chromium 69) or Qt 5.15 LTS (Chromium 83) - would require rebuilding entire Qt
 - WebOS hardware (SGX540 GPU) limits OpenGL ES 2.0 support which constrains newer Chromium versions
 
-## Future: GPU Acceleration Investigation
+## GPU Acceleration (Implemented)
 
-The HP TouchPad has a PowerVR SGX540 GPU with OpenGL ES 2.0 support. Currently, the app runs with software rendering (`--disable-gpu`). GPU acceleration is a potential performance improvement once the app is stable.
+The HP TouchPad's PowerVR SGX540 GPU with OpenGL ES 2.0 is now used for hardware-accelerated rendering.
 
-### Investigation Areas
+### Working Configuration
 
-1. **Qt QPA plugin configuration**: The webOS QPA plugin may support hardware rendering. Check `source/qt5-qpa-webos-plugin/` for EGL/OpenGL ES support.
+```cpp
+qputenv("QTWEBENGINE_CHROMIUM_FLAGS",
+    "--use-gl=egl "                         // Use EGL for OpenGL ES
+    "--enable-gpu-rasterization "           // GPU-accelerated page painting
+    "--enable-native-gpu-memory-buffers "   // Efficient GPU memory transfers
+    "--num-raster-threads=2 "               // Parallel rasterization on dual-core CPU
+    "--disable-background-timer-throttling" // Keep JS timers responsive
+);
+```
 
-2. **QtWebEngine GPU flags**: Currently disabled via `QTWEBENGINE_CHROMIUM_FLAGS`. Test with:
-   - Remove `--disable-gpu` and `--disable-gpu-compositing`
-   - Keep `--enable-software-rasterizer` as fallback
-   - Try `--use-gl=egl` or `--use-gl=gles2`
+### What Works
+- **EGL-based OpenGL ES** - `--use-gl=egl` enables hardware rendering
+- **GPU rasterization** - Pages are painted using the GPU
+- **Native GPU memory buffers** - Efficient texture/buffer management
+- **Parallel rasterization** - Uses both CPU cores for raster work
+- **Responsive timers** - Background throttling disabled for better interactivity
 
-3. **PowerVR driver compatibility**: The SGX540 driver on webOS may have limitations:
-   - Check for EGL context creation issues
-   - Test with simple Qt OpenGL examples first
-   - Verify libGLESv2.so is properly linked
+### What Breaks the UI (DO NOT USE)
+These flags cause the toolbar and navigation bar to disappear (rendered behind web content):
+- `--enable-zero-copy` - Breaks layer compositing order
+- `--disable-gpu-vsync` - Causes rendering/compositing issues
+- `--ignore-gpu-blocklist` - Forces unsupported GPU features
+- `--enable-accelerated-2d-canvas` - Affects layer compositing
+- `--disable-gpu-compositing` - Does not fix the issue when combined with other GPU flags
+- `QSG_RENDER_LOOP=basic` - Breaks Qt widget layer rendering
 
-4. **Memory constraints**: GPU acceleration may increase memory usage. Monitor with:
-   - `/proc/meminfo` on device
-   - Test with different HTTP cache sizes
-
-### Risks
-- GPU driver crashes could make debugging harder
-- May need to fall back to software rendering for stability
-- Power consumption may increase
-
-### Testing Approach
-When ready to investigate, start with a separate test branch and small Qt OpenGL ES test apps before trying full QtWebEngine GPU acceleration.
+### Fallback to Software Rendering
+If GPU issues occur, use this software-only configuration:
+```cpp
+qputenv("QTWEBENGINE_CHROMIUM_FLAGS",
+    "--disable-gpu "
+    "--disable-gpu-compositing "
+    "--enable-software-rasterizer");
+qputenv("QMLSCENE_DEVICE", "softwarecontext");
+qputenv("QT_QUICK_BACKEND", "software");
+```
 
 ## Unattended Device Iteration
 
