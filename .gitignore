@@ -2,6 +2,9 @@
 build-arm/*
 !build-arm/README.md
 package-staging/*.ipk
+package-staging/com.nizovn.qupzilla/bin/qupzilla
+package-staging/com.nizovn.qupzilla/bin/libQupZilla.so*
+package-staging/com.nizovn.qupzilla/bin/plugins/*.so
 
 # Toolchains (large binaries, downloaded separately)
 toolchains/*
