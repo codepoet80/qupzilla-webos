@@ -79,12 +79,6 @@
 #include <QCollator>
 #include <QTemporaryFile>
 
-#ifdef QZ_WS_X11
-#include <QX11Info>
-#include <xcb/xcb.h>
-#include <xcb/xcb_atom.h>
-#endif
-
 #include <cstdio>
 #include <sys/stat.h>
 
@@ -110,9 +104,6 @@ BrowserWindow::SavedWindow::SavedWindow(BrowserWindow *window)
     windowState = window->isFullScreen() ? QByteArray() : window->saveState();
     windowGeometry = window->saveGeometry();
     windowUiState = window->saveUiState();
-#ifdef QZ_WS_X11
-    virtualDesktop = window->getCurrentVirtualDesktop();
-#endif
 
     const int tabsCount = window->tabCount();
     tabs.reserve(tabsCount);
@@ -150,7 +141,6 @@ void BrowserWindow::SavedWindow::clear()
 {
     windowState.clear();
     windowGeometry.clear();
-    virtualDesktop = -1;
     currentTab = -1;
     tabs.clear();
 }
@@ -160,7 +150,7 @@ QDataStream &operator<<(QDataStream &stream, const BrowserWindow::SavedWindow &w
     stream << savedWindowVersion;
     stream << window.windowState;
     stream << window.windowGeometry;
-    stream << window.virtualDesktop;
+    stream << (int)-1;  // virtualDesktop placeholder for compatibility
     stream << window.currentTab;
     stream << window.tabs.count();
 
@@ -182,9 +172,10 @@ QDataStream &operator>>(QDataStream &stream, BrowserWindow::SavedWindow &window)
         return stream;
     }
 
+    int virtualDesktopDummy;  // Unused on webOS, kept for compatibility
     stream >> window.windowState;
     stream >> window.windowGeometry;
-    stream >> window.virtualDesktop;
+    stream >> virtualDesktopDummy;
     stream >> window.currentTab;
 
     int tabsCount = -1;
@@ -1077,9 +1068,6 @@ void BrowserWindow::restoreWindow(const SavedWindow &window)
     restoreState(window.windowState);
     restoreGeometry(window.windowGeometry);
     restoreUiState(window.windowUiState);
-#ifdef QZ_WS_X11
-    moveToVirtualDesktop(window.virtualDesktop);
-#endif
     if (!mApp->isTestModeEnabled()) {
         show(); // Window has to be visible before adding QWebEngineView's
     }
@@ -1614,70 +1602,3 @@ void BrowserWindow::closeTab()
     }
 }
 
-#ifdef QZ_WS_X11
-int BrowserWindow::getCurrentVirtualDesktop() const
-{
-    if (QGuiApplication::platformName() != QL1S("xcb"))
-        return 0;
-
-    xcb_intern_atom_cookie_t intern_atom;
-    xcb_intern_atom_reply_t *atom_reply = 0;
-    xcb_atom_t atom;
-    xcb_get_property_cookie_t cookie;
-    xcb_get_property_reply_t *reply = 0;
-    uint32_t value;
-
-    intern_atom = xcb_intern_atom(QX11Info::connection(), false, qstrlen("_NET_WM_DESKTOP"), "_NET_WM_DESKTOP");
-    atom_reply = xcb_intern_atom_reply(QX11Info::connection(), intern_atom, 0);
-
-    if (!atom_reply)
-        goto error;
-
-    atom = atom_reply->atom;
-
-    cookie = xcb_get_property(QX11Info::connection(), false, winId(), atom, XCB_ATOM_CARDINAL, 0, 1);
-    reply = xcb_get_property_reply(QX11Info::connection(), cookie, 0);
-
-    if (!reply || reply->type != XCB_ATOM_CARDINAL || reply->value_len != 1 || reply->format != sizeof(uint32_t) * 8)
-        goto error;
-
-    value = *reinterpret_cast<uint32_t*>(xcb_get_property_value(reply));
-
-    free(reply);
-    free(atom_reply);
-    return value;
-
-error:
-    free(reply);
-    free(atom_reply);
-    return 0;
-}
-
-void BrowserWindow::moveToVirtualDesktop(int desktopId)
-{
-    if (QGuiApplication::platformName() != QL1S("xcb"))
-        return;
-
-    // Don't move when window is already visible or it is first app window
-    if (desktopId < 0 || isVisible() || m_windowType == Qz::BW_FirstAppWindow)
-        return;
-
-    xcb_intern_atom_cookie_t intern_atom;
-    xcb_intern_atom_reply_t *atom_reply = 0;
-    xcb_atom_t atom;
-
-    intern_atom = xcb_intern_atom(QX11Info::connection(), false, qstrlen("_NET_WM_DESKTOP"), "_NET_WM_DESKTOP");
-    atom_reply = xcb_intern_atom_reply(QX11Info::connection(), intern_atom, 0);
-
-    if (!atom_reply)
-        goto error;
-
-    atom = atom_reply->atom;
-
-    xcb_change_property(QX11Info::connection(), XCB_PROP_MODE_REPLACE, winId(), atom,
-                        XCB_ATOM_CARDINAL, 32, 1, (const void*) &desktopId);
-
-error:
-    free(atom_reply);
-}
-#endif

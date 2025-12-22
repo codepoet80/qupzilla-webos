@@ -86,17 +86,7 @@ static void appLog(const char* msg) {
 #include <QWebEngineDownloadItem>
 #include <QWebEngineScriptCollection>
 
-#ifdef Q_OS_WIN
-#include <QtWin>
-#include <QWinJumpList>
-#include <QWinJumpListCategory>
-#endif
-
 #include <iostream>
-
-#if defined(Q_OS_WIN) && !defined(Q_OS_OS2)
-#include "registerqappassociation.h"
-#endif
 
 static bool s_testMode = false;
 QString MainApplication::s_pendingLaunchUrl;
@@ -124,9 +114,6 @@ MainApplication::MainApplication(int &argc, char** argv)
     , m_desktopNotifications(0)
     , m_webProfile(0)
     , m_autoSaver(0)
-#if defined(Q_OS_WIN) && !defined(Q_OS_OS2)
-    , m_registerQAppAssociation(0)
-#endif
 {
     std::cerr << "[MAINAPPLICATION] Constructor started" << std::endl;
     setAttribute(Qt::AA_UseHighDpiPixmaps);
@@ -157,16 +144,6 @@ MainApplication::MainApplication(int &argc, char** argv)
         return;
     }
     std::cerr << "[MAINAPPLICATION] SQLite driver OK" << std::endl;
-
-#ifdef Q_OS_WIN
-    // Set default app font (needed for N'ko)
-    int fontId = QFontDatabase::addApplicationFont(QSL("font.ttf"));
-    if (fontId != -1) {
-        const QStringList families = QFontDatabase::applicationFontFamilies(fontId);
-        if (!families.empty())
-            setFont(QFont(families.at(0)));
-    }
-#endif
 
     QUrl startUrl;
     QString startProfile;
@@ -280,14 +257,7 @@ MainApplication::MainApplication(int &argc, char** argv)
     }
     std::cerr << "[MAINAPPLICATION] Not already running, continuing startup" << std::endl;
 
-#ifdef Q_OS_MACOS
-    setQuitOnLastWindowClosed(false);
-    // disable tabbing issue#2261
-    extern void disableWindowTabbing();
-    disableWindowTabbing();
-#else
     setQuitOnLastWindowClosed(true);
-#endif
 
     std::cerr << "[MAINAPPLICATION] Setting up URL handlers" << std::endl;
     QSettings::setDefaultFormat(QSettings::IniFormat);
@@ -1141,11 +1111,17 @@ void MainApplication::loadSettings()
     settings.endGroup();
 
 #ifdef PORTABLE_BUILD
-    // For portable build, use memory-only HTTP cache but allow persistent cookies and storage
+    // For portable build (webOS), use memory-only HTTP cache and optimize for limited resources
     QWebEngineProfile* profile = m_webProfile;
     profile->setPersistentCookiesPolicy(QWebEngineProfile::AllowPersistentCookies);
     profile->setPersistentStoragePath(DataPaths::currentProfilePath());
     profile->setHttpCacheType(QWebEngineProfile::MemoryHttpCache);
+    profile->setHttpCacheMaximumSize(20 * 1024 * 1024);  // 20MB memory cache limit for webOS
+
+    // Disable animations to reduce CPU usage on webOS
+    webSettings->setAttribute(QWebEngineSettings::ScrollAnimatorEnabled, false);
+    // Disable print element backgrounds (printing not supported on webOS)
+    webSettings->setAttribute(QWebEngineSettings::PrintElementBackgrounds, false);
 #else
     QWebEngineProfile* profile = QWebEngineProfile::defaultProfile();
     profile->setPersistentCookiesPolicy(QWebEngineProfile::AllowPersistentCookies);
@@ -1207,13 +1183,8 @@ void MainApplication::loadTheme(const QString &name)
 
     QString qss = QzTools::readAllFileContents(activeThemePath + QLatin1String("/main.css"));
 
-#if defined(Q_OS_MACOS)
-    qss.append(QzTools::readAllFileContents(activeThemePath + QLatin1String("/mac.css")));
-#elif defined(Q_OS_UNIX)
+    // webOS is Linux-based
     qss.append(QzTools::readAllFileContents(activeThemePath + QLatin1String("/linux.css")));
-#elif defined(Q_OS_WIN) || defined(Q_OS_OS2)
-    qss.append(QzTools::readAllFileContents(activeThemePath + QLatin1String("/windows.css")));
-#endif
 
     if (isRightToLeft()) {
         qss.append(QzTools::readAllFileContents(activeThemePath + QLatin1String("/rtl.css")));
@@ -1291,39 +1262,8 @@ void MainApplication::translateApp()
 
 void MainApplication::checkDefaultWebBrowser()
 {
-    if (isPortable()) {
-        return;
-    }
-
-#if defined(Q_OS_WIN) && !defined(Q_OS_OS2)
-    Settings settings;
-    bool checkNow = settings.value("Web-Browser-Settings/CheckDefaultBrowser", DEFAULT_CHECK_DEFAULTBROWSER).toBool();
-
-    if (!checkNow) {
-        return;
-    }
-
-    bool checkAgain = true;
-
-    if (!associationManager()->isDefaultForAllCapabilities()) {
-        CheckBoxDialog dialog(QMessageBox::Yes | QMessageBox::No, getWindow());
-        dialog.setDefaultButton(QMessageBox::Yes);
-        dialog.setText(tr("QupZilla is not currently your default browser. Would you like to make it your default browser?"));
-        dialog.setCheckBoxText(tr("Always perform this check when starting QupZilla."));
-        dialog.setDefaultCheckState(Qt::Checked);
-        dialog.setWindowTitle(tr("Default Browser"));
-        dialog.setIcon(QMessageBox::Warning);
-
-        if (dialog.exec() == QMessageBox::Yes) {
-            if (!mApp->associationManager()->showNativeDefaultAppSettingsUi())
-                mApp->associationManager()->registerAllAssociation();
-        }
-
-        checkAgain = dialog.isChecked();
-    }
-
-    settings.setValue("Web-Browser-Settings/CheckDefaultBrowser", checkAgain);
-#endif
+    // Default browser check only applies to desktop platforms
+    // webOS handles app launching through Luna Service Bus
 }
 
 void MainApplication::checkOptimizeDatabase()
@@ -1375,22 +1315,6 @@ void MainApplication::setupUserScripts()
 void MainApplication::setUserStyleSheet(const QString &filePath)
 {
     QString userCss;
-
-#if !defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
-    // Don't grey out selection on losing focus (to prevent graying out found text)
-    QString highlightColor;
-    QString highlightedTextColor;
-#ifdef Q_OS_MACOS
-    highlightColor = QLatin1String("#b6d6fc");
-    highlightedTextColor = QLatin1String("#000");
-#else
-    QPalette pal = style()->standardPalette();
-    highlightColor = pal.color(QPalette::Highlight).name();
-    highlightedTextColor = pal.color(QPalette::HighlightedText).name();
-#endif
-    userCss += QString("::selection {background: %1; color: %2;} ").arg(highlightColor, highlightedTextColor);
-#endif
-
     userCss += QzTools::readAllFileContents(filePath).remove(QLatin1Char('\n'));
 
     const QString name = QStringLiteral("_qupzilla_userstylesheet");
@@ -1414,25 +1338,7 @@ void MainApplication::setUserStyleSheet(const QString &filePath)
 
 void MainApplication::createJumpList()
 {
-#ifdef Q_OS_WIN
-    QWinJumpList *jumpList = new QWinJumpList(this);
-    jumpList->clear();
-
-    // Frequent
-    QWinJumpListCategory *frequent = jumpList->frequent();
-    frequent->setVisible(true);
-    const QVector<HistoryEntry> mostList = m_history->mostVisited(7);
-    for (const HistoryEntry &entry : mostList) {
-        frequent->addLink(IconProvider::iconForUrl(entry.url), entry.title, applicationFilePath(), QStringList{entry.url.toEncoded()});
-    }
-
-    // Tasks
-    QWinJumpListCategory *tasks = jumpList->tasks();
-    tasks->setVisible(true);
-    tasks->addLink(IconProvider::newTabIcon(), tr("Open new tab"), applicationFilePath(), {QSL("--new-tab")});
-    tasks->addLink(IconProvider::newWindowIcon(), tr("Open new window"), applicationFilePath(), {QSL("--new-window")});
-    tasks->addLink(IconProvider::privateBrowsingIcon(), tr("Open new private window"), applicationFilePath(), {QSL("--private-browsing")});
-#endif
+    // Jump lists are a Windows-only feature
 }
 
 void MainApplication::initPulseSupport()
@@ -1441,51 +1347,3 @@ void MainApplication::initPulseSupport()
     qputenv("PULSE_PROP_OVERRIDE_application.icon_name", "qupzilla");
     qputenv("PULSE_PROP_OVERRIDE_media.icon_name", "qupzilla");
 }
-
-#if defined(Q_OS_WIN) && !defined(Q_OS_OS2)
-RegisterQAppAssociation* MainApplication::associationManager()
-{
-    if (!m_registerQAppAssociation) {
-        QString desc = tr("QupZilla is a new, fast and secure open-source WWW browser. QupZilla is licensed under GPL version 3 or (at your option) any later version. It is based on WebKit core and Qt Framework.");
-        QString fileIconPath = QApplication::applicationFilePath() + ",1";
-        QString appIconPath = QApplication::applicationFilePath() + ",0";
-        m_registerQAppAssociation = new RegisterQAppAssociation("QupZilla", QApplication::applicationFilePath(), appIconPath, desc, this);
-        m_registerQAppAssociation->addCapability(".html", "QupZilla.HTML", "HTML File", fileIconPath, RegisterQAppAssociation::FileAssociation);
-        m_registerQAppAssociation->addCapability(".htm", "QupZilla.HTM", "HTM File", fileIconPath, RegisterQAppAssociation::FileAssociation);
-        m_registerQAppAssociation->addCapability("http", "QupZilla.HTTP", "URL:HyperText Transfer Protocol", appIconPath, RegisterQAppAssociation::UrlAssociation);
-        m_registerQAppAssociation->addCapability("https", "QupZilla.HTTPS", "URL:HyperText Transfer Protocol with Privacy", appIconPath, RegisterQAppAssociation::UrlAssociation);
-    }
-    return m_registerQAppAssociation;
-}
-#endif
-
-#ifdef Q_OS_MACOS
-#include <QFileOpenEvent>
-
-bool MainApplication::event(QEvent* e)
-{
-    switch (e->type()) {
-    case QEvent::FileOpen: {
-        QFileOpenEvent *ev = static_cast<QFileOpenEvent*>(e);
-        if (!ev->url().isEmpty()) {
-            addNewTab(ev->url());
-        } else if (!ev->file().isEmpty()) {
-            addNewTab(QUrl::fromLocalFile(ev->file()));
-        } else {
-            return false;
-        }
-        return true;
-    }
-
-    case QEvent::ApplicationActivate:
-        if (!activeWindow() && m_windows.isEmpty())
-            createWindow(Qz::BW_NewWindow);
-        break;
-
-    default:
-        break;
-    }
-
-    return QtSingleApplication::event(e);
-}
-#endif

@@ -47,7 +47,6 @@ class DownloadManager;
 class UserAgentManager;
 class SearchEnginesManager;
 class HTML5PermissionsManager;
-class RegisterQAppAssociation;
 class DesktopNotificationsFactory;
 class ProxyStyle;
 class SessionManager;
@@ -208,19 +207,6 @@ private:
 
     void createJumpList();
     void initPulseSupport();
-
-#if defined(Q_OS_WIN) && !defined(Q_OS_OS2)
-public:
-    RegisterQAppAssociation* associationManager();
-
-private:
-    RegisterQAppAssociation* m_registerQAppAssociation;
-#endif
-
-#ifdef Q_OS_MACOS
-public:
-    bool event(QEvent* e);
-#endif
 };
 
 #endif // MAINAPPLICATION_H

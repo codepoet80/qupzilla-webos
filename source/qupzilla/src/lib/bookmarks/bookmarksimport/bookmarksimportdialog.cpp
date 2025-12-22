@@ -21,7 +21,6 @@
 #include "chromeimporter.h"
 #include "operaimporter.h"
 #include "htmlimporter.h"
-#include "ieimporter.h"
 #include "bookmarks.h"
 #include "bookmarkitem.h"
 #include "bookmarksmodel.h"
@@ -49,9 +48,8 @@ BookmarksImportDialog::BookmarksImportDialog(QWidget* parent)
     connect(ui->chooseFile, SIGNAL(clicked()), this, SLOT(setFile()));
     connect(ui->cancelButton, SIGNAL(rejected()), this, SLOT(close()));
 
-#ifndef Q_OS_WIN
+    // Hide IE importer (Windows-only, not available on webOS)
     ui->browserList->setItemHidden(ui->browserList->item(IE), true);
-#endif
 }
 
 BookmarksImportDialog::~BookmarksImportDialog()
@@ -82,8 +80,8 @@ void BookmarksImportDialog::nextPage()
             m_importer = new OperaImporter;
             break;
         case IE:
-            m_importer = new IeImporter;
-            break;
+            // IE importer not available on webOS
+            return;
         case Html:
             m_importer = new HtmlImporter;
             break;

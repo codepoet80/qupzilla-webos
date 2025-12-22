@@ -46,10 +46,6 @@
 
 #include "settings.h"
 
-#ifdef Q_OS_MACOS
-extern void qt_mac_set_dock_menu(QMenu* menu);
-#endif
-
 MainMenu::MainMenu(BrowserWindow* window, QWidget* parent)
     : QMenu(parent)
     , m_window(window)
@@ -377,9 +373,7 @@ void MainMenu::restoreClosedTab()
 
 void MainMenu::aboutToShowFileMenu()
 {
-#ifndef Q_OS_MACOS
     m_actions[QSL("File/CloseWindow")]->setEnabled(mApp->windowCount() > 1);
-#endif
 }
 
 void MainMenu::aboutToShowViewMenu()
@@ -625,11 +619,9 @@ void MainMenu::init()
     // Help menu
     m_menuHelp = new QMenu(tr("&Help"));
 
-#ifndef Q_OS_MACOS
     ADD_ACTION("Help/AboutQt", m_menuHelp, QIcon(), tr("About &Qt"), SLOT(aboutQt()), "");
     m_menuHelp->addAction(m_actions[QSL("Standard/About")]);
     m_menuHelp->addSeparator();
-#endif
 
     ADD_ACTION("Help/InfoAboutApp", m_menuHelp, QIcon::fromTheme(QSL("help-contents")), tr("Information about application"), SLOT(showInfoAboutApp()), "");
     ADD_ACTION("Help/ConfigInfo", m_menuHelp, QIcon(), tr("Configuration Information"), SLOT(showConfigInfo()), "");
@@ -651,29 +643,8 @@ void MainMenu::init()
     connect(action, SIGNAL(triggered()), this, SLOT(restoreClosedTab()));
     m_actions[QSL("Other/RestoreClosedTab")] = action;
 
-#ifdef Q_OS_MACOS
-    m_actions[QSL("View/FullScreen")]->setShortcut(QKeySequence(QSL("Ctrl+Meta+F")));
-
-    // Add standard actions to File Menu (as it won't be ever cleared) and Mac menubar should move them to "Application" menu
-    m_menuFile->addAction(m_actions[QSL("Standard/About")]);
-    m_menuFile->addAction(m_actions[QSL("Standard/Preferences")]);
-
-    // Prevent ConfigInfo action to be detected as "Preferences..." action in Mac menubar
-    m_actions[QSL("Help/ConfigInfo")]->setMenuRole(QAction::NoRole);
-
-    // Create Dock menu
-    QMenu* dockMenu = new QMenu(0);
-    dockMenu->addAction(m_actions[QSL("File/NewTab")]);
-    dockMenu->addAction(m_actions[QSL("File/NewWindow")]);
-    dockMenu->addAction(m_actions[QSL("File/NewPrivateWindow")]);
-    qt_mac_set_dock_menu(dockMenu);
-#endif
-
-#if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
+    // Add Preferences to Edit menu (Unix convention)
     m_menuEdit->addAction(m_actions[QSL("Standard/Preferences")]);
-#elif !defined(Q_OS_MACOS)
-    m_menuTools->addAction(m_actions[QSL("Standard/Preferences")]);
-#endif
 
     addActionsToWindow();
 }

@@ -32,6 +32,21 @@ History::History(QObject* parent)
     , m_model(0)
 {
     loadSettings();
+
+    // Prune old history on startup for memory optimization (webOS)
+    pruneOldHistory();
+}
+
+void History::pruneOldHistory()
+{
+    // Keep only last 30 days of history to save storage and memory
+    const int retentionDays = 30;
+    const qint64 cutoffDate = QDateTime::currentDateTime().addDays(-retentionDays).toMSecsSinceEpoch();
+
+    QSqlQuery query(SqlDatabase::instance()->database());
+    query.prepare(QSL("DELETE FROM history WHERE date < ?"));
+    query.addBindValue(cutoffDate);
+    query.exec();
 }
 
 HistoryModel* History::model()

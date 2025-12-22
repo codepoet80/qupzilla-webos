@@ -42,3 +42,11 @@ outOfDirPlugins = $$(QUPZILLA_PLUGINS_SRCDIR)
 
 # QtWebEngine disable
 disablePlugin(AccessKeysNavigation)
+
+# webOS optimizations - disable heavy/unused plugins
+disablePlugin(MouseGestures)
+disablePlugin(FlashCookieManager)
+disablePlugin(GreaseMonkey)
+disablePlugin(AutoScroll)
+disablePlugin(VerticalTabs)
+disablePlugin(ImageFinder)

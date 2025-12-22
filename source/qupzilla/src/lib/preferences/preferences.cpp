@@ -42,7 +42,9 @@
 #include "tabbedwebview.h"
 #include "clearprivatedata.h"
 #include "useragentdialog.h"
+#ifdef Q_OS_WIN
 #include "registerqappassociation.h"
+#endif
 #include "profilemanager.h"
 #include "html5permissions/html5permissionsdialog.h"
 #include "searchenginesdialog.h"

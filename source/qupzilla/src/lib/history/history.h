@@ -76,6 +76,8 @@ signals:
     void resetHistory();
 
 private:
+    void pruneOldHistory();
+
     bool m_isSaving;
     HistoryModel* m_model;
 };

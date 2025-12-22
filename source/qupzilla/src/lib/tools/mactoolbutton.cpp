@@ -18,36 +18,7 @@
 * ============================================================ */
 #include "mactoolbutton.h"
 
-#ifdef Q_OS_MACOS
-MacToolButton::MacToolButton(QWidget* parent)
-    : QPushButton(parent)
-    , m_autoRise(false)
-    , m_buttonFixedSize(18, 18)
-{
-}
-
-void MacToolButton::setIconSize(const QSize &size)
-{
-    QPushButton::setIconSize(size);
-    m_buttonFixedSize = QSize(size.width() + 2, size.height() + 2);
-}
-
-void MacToolButton::setAutoRaise(bool enable)
-{
-    m_autoRise = enable;
-    setFlat(enable);
-    if (enable) {
-        setFixedSize(m_buttonFixedSize);
-    }
-}
-
-bool MacToolButton::autoRaise() const
-{
-    return m_autoRise;
-}
-#else
 MacToolButton::MacToolButton(QWidget* parent)
     : QToolButton(parent)
 {
 }
-#endif

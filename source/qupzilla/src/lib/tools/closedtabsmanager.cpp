@@ -40,6 +40,12 @@ void ClosedTabsManager::saveTab(WebTab *tab)
     closedTab.position = tab->tabIndex();
     closedTab.tabState = WebTab::SavedTab(tab);
     m_closedTabs.prepend(closedTab);
+
+    // Limit closed tabs to save memory (webOS optimization)
+    const int maxClosedTabs = 10;
+    while (m_closedTabs.size() > maxClosedTabs) {
+        m_closedTabs.removeLast();
+    }
 }
 
 bool ClosedTabsManager::isClosedTabAvailable() const

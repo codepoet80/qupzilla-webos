@@ -21,29 +21,10 @@
 
 #include "qzcommon.h"
 
-#ifdef Q_OS_MACOS
-#include <QPushButton>
-
-class QUPZILLA_EXPORT MacToolButton : public QPushButton
-{
-    Q_OBJECT
-    Q_PROPERTY(bool autoRaise READ autoRaise WRITE setAutoRaise)
-
-public:
-    explicit MacToolButton(QWidget* parent = 0);
-
-    void setIconSize(const QSize &size);
-
-    void setAutoRaise(bool enable);
-    bool autoRaise() const;
-
-private:
-    bool m_autoRise;
-    QSize m_buttonFixedSize;
-};
-#else
 #include <QToolButton>
 
+// MacToolButton is a cross-platform QToolButton subclass
+// (Simplified for webOS-only build - macOS QPushButton variant removed)
 class QUPZILLA_EXPORT MacToolButton : public QToolButton
 {
     Q_OBJECT
@@ -51,5 +32,5 @@ class QUPZILLA_EXPORT MacToolButton : public QToolButton
 public:
     explicit MacToolButton(QWidget* parent = 0);
 };
-#endif
+
 #endif // MACTOOLBUTTON_H

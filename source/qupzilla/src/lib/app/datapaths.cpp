@@ -85,51 +85,32 @@ void DataPaths::clearTempData()
 
 void DataPaths::init()
 {
-    // AppData
-#if defined(Q_OS_MACOS)
-    m_paths[AppData].append(QApplication::applicationDirPath() + QLatin1String("/../Resources"));
-#elif defined(Q_OS_UNIX) && !defined(NO_SYSTEM_DATAPATH)
-    m_paths[AppData].append(USE_DATADIR);
-#else
+    // AppData - webOS uses application directory (NO_SYSTEM_DATAPATH)
     m_paths[AppData].append(QApplication::applicationDirPath());
-#endif
 
     m_paths[Translations].append(m_paths[AppData].at(0) + QLatin1String("/locale"));
     m_paths[Themes].append(m_paths[AppData].at(0) + QLatin1String("/themes"));
     m_paths[Plugins].append(m_paths[AppData].at(0) + QLatin1String("/plugins"));
 
-    // Config
+    // Config - webOS/Unix path
     if (MainApplication::isTestModeEnabled()) {
         m_paths[Config].append(QDir::tempPath() + QL1S("/QupZilla-test"));
     } else {
-#if defined(Q_OS_WIN) || defined(Q_OS_OS2)
-    // Use %LOCALAPPDATA%/qupzilla as Config path on Windows
-    m_paths[Config].append(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation));
-#elif defined(Q_OS_MACOS)
-    m_paths[Config].append(QDir::homePath() + QLatin1String("/Library/Application Support/QupZilla"));
-#else // Unix
-    m_paths[Config].append(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + QL1S("/qupzilla"));
-#endif
+        m_paths[Config].append(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + QL1S("/qupzilla"));
     }
 
     // Profiles
     m_paths[Profiles].append(m_paths[Config].at(0) + QLatin1String("/profiles"));
 
-    // Temp
-#ifdef Q_OS_UNIX
+    // Temp - webOS/Unix path
     const QByteArray &user = qgetenv("USER");
     const QString &tempPath = QString(QSL("%1/qupzilla-%2")).arg(QDir::tempPath(), user.constData());
     m_paths[Temp].append(tempPath);
-#else
-    m_paths[Temp].append(m_paths[Config].at(0) + QLatin1String("/tmp"));
-#endif
 
-    // Cache
-#ifdef Q_OS_UNIX
+    // Cache - webOS/Unix path
     const QString &cachePath = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation);
     if (!cachePath.isEmpty())
         m_paths[Cache].append(cachePath + QLatin1String("/qupzilla"));
-#endif
 
     // Make sure the Config and Temp paths exists
     QDir dir;

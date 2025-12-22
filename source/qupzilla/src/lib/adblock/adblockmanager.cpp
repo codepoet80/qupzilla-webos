@@ -349,6 +349,23 @@ void AdBlockManager::load()
 
     connect(m_interceptor, &AdBlockUrlInterceptor::requestBlocked, this, [this](const AdBlockedRequest &request) {
         m_blockedRequests[request.firstPartyUrl].append(request);
+
+        // Limit blocked requests per URL for memory optimization (webOS)
+        const int maxRequestsPerUrl = 50;
+        if (m_blockedRequests[request.firstPartyUrl].size() > maxRequestsPerUrl) {
+            m_blockedRequests[request.firstPartyUrl].remove(0);
+        }
+
+        // Limit total number of URLs tracked
+        const int maxUrls = 100;
+        if (m_blockedRequests.size() > maxUrls) {
+            // Remove oldest URL (first key)
+            auto it = m_blockedRequests.begin();
+            if (it != m_blockedRequests.end()) {
+                m_blockedRequests.erase(it);
+            }
+        }
+
         emit blockedRequestsChanged(request.firstPartyUrl);
     });
 

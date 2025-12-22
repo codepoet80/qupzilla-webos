@@ -853,8 +853,13 @@ void ComboTabBar::addCornerWidget(QWidget* widget, Qt::Corner corner)
 // static
 int ComboTabBar::slideAnimationDuration()
 {
+#ifdef PORTABLE_BUILD
+    // Disable tab animations on webOS to reduce CPU usage
+    return 0;
+#else
     // taken from qtabbar_p.h
     return 250;
+#endif
 }
 
 void ComboTabBar::ensureVisible(int index, int xmargin)

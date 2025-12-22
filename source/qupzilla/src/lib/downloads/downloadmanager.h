@@ -32,7 +32,6 @@ class QUrl;
 class QNetworkAccessManager;
 class QListWidgetItem;
 class QWebEngineDownloadItem;
-class QWinTaskbarButton;
 
 class DownloadItem;
 class WebPage;
@@ -112,8 +111,6 @@ private:
     QString m_externalArguments;
 
     DownloadOption m_lastDownloadOption;
-
-    QWinTaskbarButton *m_taskbarButton = nullptr;
 };
 
 #endif // DOWNLOADMANAGER_H

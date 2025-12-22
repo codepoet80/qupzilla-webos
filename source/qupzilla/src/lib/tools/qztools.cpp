@@ -41,18 +41,6 @@
 #include <QMessageBox>
 #include <QUrlQuery>
 
-#ifdef QZ_WS_X11
-#include <QX11Info>
-#include <xcb/xcb.h>
-#endif
-
-#ifdef Q_OS_WIN
-#include <windows.h>
-#endif
-
-#ifdef Q_OS_MACOS
-#include <CoreServices/CoreServices.h>
-#endif
 
 QByteArray QzTools::pixmapToByteArray(const QPixmap &pix)
 {
@@ -824,134 +812,15 @@ bool QzTools::startExternalProcess(const QString &executable, const QString &arg
 
 void QzTools::setWmClass(const QString &name, const QWidget* widget)
 {
-#ifdef QZ_WS_X11
-    if (QGuiApplication::platformName() != QL1S("xcb"))
-        return;
-
-    const QByteArray &nameData = name.toUtf8();
-    const QByteArray &classData = QByteArrayLiteral("QupZilla");
-
-    uint32_t class_len = nameData.length() + 1 + classData.length() + 1;
-    char *class_hint = (char*) malloc(class_len);
-
-    qstrcpy(class_hint, nameData.constData());
-    qstrcpy(class_hint + nameData.length() + 1, classData.constData());
-
-    xcb_change_property(QX11Info::connection(), XCB_PROP_MODE_REPLACE, widget->winId(),
-                        XCB_ATOM_WM_CLASS, XCB_ATOM_STRING, 8, class_len, class_hint);
-
-    free(class_hint);
-
-#else
+    // No-op on webOS (X11 WM_CLASS not applicable)
     Q_UNUSED(name)
     Q_UNUSED(widget)
-#endif
 }
 
 QString QzTools::operatingSystem()
 {
-#ifdef Q_OS_MACOS
-    QString str = "Mac OS X";
-
-    SInt32 majorVersion;
-    SInt32 minorVersion;
-
-    if (Gestalt(gestaltSystemVersionMajor, &majorVersion) == noErr && Gestalt(gestaltSystemVersionMinor, &minorVersion) == noErr) {
-        str.append(QString(" %1.%2").arg(majorVersion).arg(minorVersion));
-    }
-
-    return str;
-#endif
-#ifdef Q_OS_LINUX
-    return "Linux";
-#endif
-#ifdef Q_OS_BSD4
-    return "BSD 4.4";
-#endif
-#ifdef Q_OS_BSDI
-    return "BSD/OS";
-#endif
-#ifdef Q_OS_FREEBSD
-    return "FreeBSD";
-#endif
-#ifdef Q_OS_HPUX
-    return "HP-UX";
-#endif
-#ifdef Q_OS_HURD
-    return "GNU Hurd";
-#endif
-#ifdef Q_OS_LYNX
-    return "LynxOS";
-#endif
-#ifdef Q_OS_NETBSD
-    return "NetBSD";
-#endif
-#ifdef Q_OS_OS2
-    return "OS/2";
-#endif
-#ifdef Q_OS_OPENBSD
-    return "OpenBSD";
-#endif
-#ifdef Q_OS_OSF
-    return "HP Tru64 UNIX";
-#endif
-#ifdef Q_OS_SOLARIS
-    return "Sun Solaris";
-#endif
-#ifdef Q_OS_UNIXWARE
-    return "UnixWare 7 / Open UNIX 8";
-#endif
-#ifdef Q_OS_UNIX
-    return "Unix";
-#endif
-#ifdef Q_OS_HAIKU
-    return "Haiku";
-#endif
-#ifdef Q_OS_WIN32
-    QString str = "Windows";
-
-    switch (QSysInfo::windowsVersion()) {
-    case QSysInfo::WV_NT:
-        str.append(" NT");
-        break;
-
-    case QSysInfo::WV_2000:
-        str.append(" 2000");
-        break;
-
-    case QSysInfo::WV_XP:
-        str.append(" XP");
-        break;
-    case QSysInfo::WV_2003:
-        str.append(" XP Pro x64");
-        break;
-
-    case QSysInfo::WV_VISTA:
-        str.append(" Vista");
-        break;
-
-    case QSysInfo::WV_WINDOWS7:
-        str.append(" 7");
-        break;
-
-    case QSysInfo::WV_WINDOWS8:
-        str.append(" 8");
-        break;
-
-    case QSysInfo::WV_WINDOWS8_1:
-        str.append(" 8.1");
-        break;
-
-    case QSysInfo::WV_WINDOWS10:
-        str.append(" 10");
-        break;
-
-    default:
-        break;
-    }
-
-    return str;
-#endif
+    // webOS is Linux-based
+    return "webOS";
 }
 
 QString QzTools::cpuArchitecture()

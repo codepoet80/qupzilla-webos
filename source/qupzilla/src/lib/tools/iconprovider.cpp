@@ -89,6 +89,13 @@ void IconProvider::saveIcon(WebView* view)
 
     m_autoSaver->changeOccurred();
     m_iconBuffer.append(item);
+
+    // Limit icon buffer size for memory optimization (webOS)
+    const int maxBufferedIcons = 200;
+    if (m_iconBuffer.size() > maxBufferedIcons) {
+        // Force save to database and clear buffer when limit exceeded
+        m_autoSaver->saveIfNecessary();
+    }
 }
 
 QIcon IconProvider::bookmarkIcon() const

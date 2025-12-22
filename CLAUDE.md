@@ -384,6 +384,36 @@ QtWebEngine in Qt 5.9 is based on Chromium ~56. Upgrading options:
 - Qt 5.12 LTS (Chromium 69) or Qt 5.15 LTS (Chromium 83) - would require rebuilding entire Qt
 - WebOS hardware (SGX540 GPU) limits OpenGL ES 2.0 support which constrains newer Chromium versions
 
+## Future: GPU Acceleration Investigation
+
+The HP TouchPad has a PowerVR SGX540 GPU with OpenGL ES 2.0 support. Currently, the app runs with software rendering (`--disable-gpu`). GPU acceleration is a potential performance improvement once the app is stable.
+
+### Investigation Areas
+
+1. **Qt QPA plugin configuration**: The webOS QPA plugin may support hardware rendering. Check `source/qt5-qpa-webos-plugin/` for EGL/OpenGL ES support.
+
+2. **QtWebEngine GPU flags**: Currently disabled via `QTWEBENGINE_CHROMIUM_FLAGS`. Test with:
+   - Remove `--disable-gpu` and `--disable-gpu-compositing`
+   - Keep `--enable-software-rasterizer` as fallback
+   - Try `--use-gl=egl` or `--use-gl=gles2`
+
+3. **PowerVR driver compatibility**: The SGX540 driver on webOS may have limitations:
+   - Check for EGL context creation issues
+   - Test with simple Qt OpenGL examples first
+   - Verify libGLESv2.so is properly linked
+
+4. **Memory constraints**: GPU acceleration may increase memory usage. Monitor with:
+   - `/proc/meminfo` on device
+   - Test with different HTTP cache sizes
+
+### Risks
+- GPU driver crashes could make debugging harder
+- May need to fall back to software rendering for stability
+- Power consumption may increase
+
+### Testing Approach
+When ready to investigate, start with a separate test branch and small Qt OpenGL ES test apps before trying full QtWebEngine GPU acceleration.
+
 ## Unattended Device Iteration
 
 When debugging crashes or issues that require repeated build-test cycles on the webOS device, use this workflow to iterate without user intervention:

@@ -63,7 +63,6 @@ public:
         QByteArray windowState;
         QByteArray windowGeometry;
         QHash<QString, QVariant> windowUiState;
-        int virtualDesktop = -1;
         int currentTab = -1;
         QVector<WebTab::SavedTab> tabs;
 
@@ -238,12 +237,6 @@ private:
     QTimer* m_hideNavigationTimer;
 
     QList<QPointer<QWidget> > m_deleteOnCloseWidgets;
-
-#ifdef QZ_WS_X11
-private:
-    int getCurrentVirtualDesktop() const;
-    void moveToVirtualDesktop(int desktopId);
-#endif
 };
 
 #endif // QUPZILLA_H
