@@ -1,0 +1,34 @@
+#!/bin/bash
+# Wrapper for moc that post-processes output to be Qt 5.9.7 compatible
+# Qt 5.15 moc generates code incompatible with Qt 5.9.7
+
+# Run the system moc
+/usr/lib/qt5/bin/moc "$@"
+exit_code=$?
+
+# If moc succeeded and output was generated, post-process it
+if [ $exit_code -eq 0 ]; then
+    # Find the output file (usually after -o)
+    output_file=""
+    for arg in "$@"; do
+        if [ "$prev_was_o" = "1" ]; then
+            output_file="$arg"
+            break
+        fi
+        if [ "$arg" = "-o" ]; then
+            prev_was_o=1
+        fi
+    done
+
+    if [ -n "$output_file" ] && [ -f "$output_file" ]; then
+        # Post-process to fix Qt 5.15 -> Qt 5.9.7 incompatibilities
+        # Replace QMetaObject::SuperData::link<X::staticMetaObject>() with &X::staticMetaObject
+        sed -i 's/QMetaObject::SuperData::link<\([^>]*\)>()/\&\1/g' "$output_file"
+        # Replace QT_INIT_METAOBJECT with empty (Qt 5.12+ macro)
+        sed -i 's/QT_INIT_METAOBJECT //g' "$output_file"
+        # Replace qPluginArchRequirements() with 0 (Qt 5.14+ plugin metadata)
+        sed -i 's/qPluginArchRequirements()/0/g' "$output_file"
+    fi
+fi
+
+exit $exit_code

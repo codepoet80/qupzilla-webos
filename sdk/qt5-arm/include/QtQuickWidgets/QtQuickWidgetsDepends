@@ -1,0 +1,8 @@
+/* Generated for cross-compilation */
+#ifdef __cplusplus
+#include <QtCore/QtCore>
+#include <QtGui/QtGui>
+#include <QtWidgets/QtWidgets>
+#include <QtQml/QtQml>
+#include <QtQuick/QtQuick>
+#endif

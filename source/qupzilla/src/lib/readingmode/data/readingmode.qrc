@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/readingmode">
+        <file>Readability.js</file>
+        <file>reader.html</file>
+        <file>reader-icon.svg</file>
+        <file>reader-icon-active.svg</file>
+    </qresource>
+</RCC>

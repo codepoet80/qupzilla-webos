@@ -1,0 +1,5 @@
+/* Generated for cross-compilation */
+#ifdef __cplusplus
+#include <QtCore/QtCore>
+#include <QtNetwork/QtNetwork>
+#endif

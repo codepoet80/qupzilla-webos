@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>%TITLE%</title>
+<style>
+/* Base styles - theme CSS will override these */
+* { box-sizing: border-box; }
+:root { --reading-font-size: 18px; }
+body { font-size: var(--reading-font-size); }
+</style>
+<style>
+%THEME-CSS%
+</style>
+</head>
+<body>
+<div class="toolbar">
+    <button class="back-btn" onclick="goBack()">%BACK-LABEL%</button>
+    <button onclick="changeFontSize(-2)">A-</button>
+    <button onclick="changeFontSize(2)">A+</button>
+</div>
+
+<div id="loading" class="loading">%LOADING%...</div>
+<div id="error" class="error" style="display:none;">
+    %ERROR-MSG%<br><br>
+    <a href="%ORIGINAL-URL%">%BACK-LABEL%</a>
+</div>
+
+<article id="article">
+    <h1 id="article-title"></h1>
+    <div id="article-byline" class="byline"></div>
+    <div id="article-source" class="source-link"></div>
+    <div id="article-content" class="content"></div>
+</article>
+
+<script>
+(function() {
+    var originalUrl = decodeURIComponent('%ORIGINAL-URL-ENCODED%');
+    var currentFontSize = 18;
+
+    window.goBack = function() {
+        window.location.href = originalUrl;
+    };
+
+    window.changeFontSize = function(delta) {
+        currentFontSize = Math.max(14, Math.min(28, currentFontSize + delta));
+        document.documentElement.style.setProperty('--reading-font-size', currentFontSize + 'px');
+    };
+
+    window.displayArticle = function(title, content, byline) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'none';
+        document.getElementById('article').style.display = 'block';
+        document.getElementById('article-title').textContent = title || 'Article';
+        if (byline) {
+            document.getElementById('article-byline').textContent = byline;
+        }
+        document.getElementById('article-source').innerHTML =
+            '%SOURCE-LABEL%: <a href="' + originalUrl + '">' + originalUrl + '</a>';
+        document.getElementById('article-content').innerHTML = content;
+        document.title = title || 'Reading Mode';
+    };
+
+    window.showError = function() {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+    };
+})();
+</script>
+</body>
+</html>

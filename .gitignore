@@ -1,0 +1,18 @@
+# Build outputs
+build-arm/*
+!build-arm/README.md
+package-staging/*.ipk
+
+# Toolchains (large binaries, downloaded separately)
+toolchains/*
+!toolchains/README.md
+
+# SDK libraries extracted by setup-sdk.sh
+sdk/qt5-arm/lib/*.so
+sdk/qt5-arm/lib/*.so.5
+# Keep stub libraries (they're tiny and essential)
+!sdk/qt5-arm/lib/*.a
+!sdk/qt5-arm/lib/libQt5Positioning.so*
+
+# Temp files
+.sdk-extract-tmp/

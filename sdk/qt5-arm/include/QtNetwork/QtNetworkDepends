@@ -1,0 +1,4 @@
+/* Generated for cross-compilation */
+#ifdef __cplusplus
+#include <QtCore/QtCore>
+#endif

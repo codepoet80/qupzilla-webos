@@ -1,0 +1,20 @@
+{
+	"title": "QupZilla",
+	"id": "com.nizovn.qupzilla",
+	"version": "2.3.0",
+	"release_date": "10-December-2025",
+	"vendor": "Nikolay Nizov",
+	"vendor_email": "nizovn@gmail.com",
+	"type": "pdk",
+	"main": "bin/qupzilla",
+	"icon": "qupzilla.png",
+	"keywords": ["browser"],
+	"qt5sdk": {
+		"exports": [
+			"QMLSCENE_DEVICE=softwarecontext",
+			"QT_QPA_WEBOS_AUTOROTATE=1",
+			"QT_QPA_WEBOS_RIGHT_CLICK_ON_LONG_TAP=1"
+		]
+	},
+	"requiredMemory": 150
+}

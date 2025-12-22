@@ -1,0 +1,7 @@
+/* Generated for cross-compilation */
+#ifdef __cplusplus
+/* Include config headers first to define QT_FEATURE_* macros */
+#include <QtWidgets/qtwidgets-config.h>
+#include <QtCore/QtCore>
+#include <QtGui/QtGui>
+#endif
