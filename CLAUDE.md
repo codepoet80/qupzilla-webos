@@ -355,6 +355,8 @@ cd tests/autotests && qmake && make && ./autotests
 
 3. **Font/EGL errors**: These are usually caused by missing environment variables. Ensure main.cpp sets `QT_QPA_FONTDIR` and other variables for PORTABLE_BUILD.
 
+4. **"QMLSCENE_DEVICE=softwarecontext"**: this setting MUST be in appinfo.json in the qt5sdk/exports section.
+
 ### Version number not updating in About dialog
 The version is compiled into `qzcommon.o` from `QUPZILLA_VERSION` macro. After changing `QZ_VERSION` in `defines.pri`, force rebuild:
 ```bash
