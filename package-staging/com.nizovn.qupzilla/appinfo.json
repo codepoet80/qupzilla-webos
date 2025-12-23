@@ -11,6 +11,7 @@
 	"keywords": ["browser"],
 	"qt5sdk": {
 		"exports": [
+			"QMLSCENE_DEVICE=softwarecontext",
 			"QT_QPA_WEBOS_AUTOROTATE=1",
 			"QT_QPA_WEBOS_RIGHT_CLICK_ON_LONG_TAP=1"
 		]

@@ -165,14 +165,6 @@ void SearchEnginesManager::restoreDefaults()
     duck.shortcut = "d";
     duck.suggestionsUrl = "https://ac.duckduckgo.com/ac/?q=%s&type=list";
 
-    Engine sp;
-    sp.name = "StartPage";
-    sp.icon = QIcon(":/icons/sites/startpage.png");
-    sp.url = "https://startpage.com/do/search";
-    sp.postData = "query=%s&cat=web&language=english";
-    sp.shortcut = "sp";
-    sp.suggestionsUrl = "https://startpage.com/cgi-bin/csuggest?output=json&lang=english&query=%s";
-
     Engine wiki;
     wiki.name = "Wikipedia (en)";
     wiki.icon = QIcon(":/icons/sites/wikipedia.png");
@@ -188,7 +180,6 @@ void SearchEnginesManager::restoreDefaults()
     google.suggestionsUrl = "https://suggestqueries.google.com/complete/search?output=firefox&q=%s";
 
     addEngine(duck);
-    addEngine(sp);
     addEngine(wiki);
     addEngine(google);
 

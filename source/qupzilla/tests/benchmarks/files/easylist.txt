@@ -31373,7 +31373,6 @@ technologytell.com###infobox_techmedia
 openpistemap.org###infotabs
 mg.co.za###inline_banner
 thaindian.com###inlineblock
-startpage.com###inlinetable
 eurweb.com###inner div[id^="div-gpt-ad-"]
 vbs.tv###inner-square
 newsdaily.com###insert
