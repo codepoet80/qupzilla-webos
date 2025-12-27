@@ -64,9 +64,8 @@ void SpeedDial::loadSettings()
 
     if (allPages.isEmpty()) {
         allPages = "url:\"https://lite.duckduckgo.com\"|title:\"DuckDuck Go\";"
-                   "url:\"https://www.wikipedia.org\"|title:\"Wikipeida\";"
-                   "url:\"https://www.webosarchive.org\"|title:\"webOS Archive\";"
-                   "url:\"https://www.weboslives.eu\"|title:\"webOS Lives\";";
+                   "url:\"https://www.wikipedia.org\"|title:\"Wikipedia\";"
+                   "url:\"https://www.webosarchive.org\"|title:\"webOS Archive\";";
     }
     changed(allPages);
 
