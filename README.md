@@ -1,6 +1,7 @@
 # QupZilla for webOS
 
 QupZilla 2.3.0 web browser ported to legacy webOS (HP TouchPad / Pre3). Uses Qt 5.9.7 runtime with Qt 5.15 build tools, cross-compiled for ARMv7.
+[screenshot](icons/screenshot.png)
 
 ## Prerequisites
 
