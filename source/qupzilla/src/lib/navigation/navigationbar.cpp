@@ -505,8 +505,12 @@ void NavigationBar::loadSettings()
         QSL("locationbar"),
         QSL("button-downloads"),
         QSL("readingmode-icon"),
+#ifndef PORTABLE_BUILD
         QSL("adblock-icon"),
         QSL("button-tools")
+#else
+        QSL("adblock-icon")
+#endif
     };
 
     Settings settings;
@@ -519,6 +523,9 @@ void NavigationBar::loadSettings()
 
     m_layoutIds.removeDuplicates();
     m_layoutIds.removeAll(QString());
+#ifdef PORTABLE_BUILD
+    m_layoutIds.removeAll(QSL("button-tools"));
+#endif
     if (!m_layoutIds.contains(QSL("locationbar"))) {
         m_layoutIds.append(QSL("locationbar"));
     }
