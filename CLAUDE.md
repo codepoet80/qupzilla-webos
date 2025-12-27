@@ -312,7 +312,35 @@ superMenu->addMenu(userAgentMenu);
 
 3. **Use `#ifndef PORTABLE_BUILD`** to hide desktop-only items on webOS.
 
-### 14. User-Agent Management
+### 14. Dark Theme for UI Elements (PORTABLE_BUILD)
+
+The webOS system uses dark menus, requiring UI adjustments:
+
+**About Dialog** (`aboutdialog.cpp`):
+```cpp
+ui->textBrowser->setStyleSheet("QTextBrowser { background-color: #2d2d2d; color: #e0e0e0; }");
+```
+
+**Menu Icons**: All SVG icons in these directories use `color:#e0e0e0` (light) instead of the default `#4d4d4d` (dark):
+- `src/lib/data/icons/menu/*.svg`
+- `src/lib/data/breeze-fallback/16x16/*.svg`
+- `src/lib/data/breeze-fallback/22x22/*.svg`
+
+**Private Browsing Icon**: `icons/menu/privatebrowsing.png` is inverted to white.
+
+**AdBlock Icon**: `src/lib/adblock/data/adblock.png` resized from 32x32 to 27x27 (15% smaller) to match other toolbar icons.
+
+### 15. Toolbar Customization (PORTABLE_BUILD)
+
+The Tools button (">|") is hidden in PORTABLE_BUILD since its functionality is in the hamburger menu (`navigationbar.cpp`):
+```cpp
+// In loadSettings() - filter out button-tools
+#ifdef PORTABLE_BUILD
+    m_layoutIds.removeAll(QSL("button-tools"));
+#endif
+```
+
+### 16. User-Agent Management
 
 QupZilla has built-in `UserAgentManager` infrastructure. To add a user-agent switcher menu:
 
@@ -364,9 +392,11 @@ touch source/qupzilla/src/lib/app/qzcommon.cpp && cd build-arm && make
 ```
 
 ### Resource files not updating after changes
-Qt resource files (.qrc) need explicit rebuild when embedded files change:
+Qt resource files (.qrc) need explicit rebuild when embedded files change (icons, HTML, etc.):
 ```bash
-rm -f ../../../source/qupzilla/build/qrc_data.cpp && make
+# Remove compiled resource objects to force rebuild
+rm -f /path/to/source/qupzilla/build/qrc_*.o
+make -j4
 ```
 
 ### Forcing full rebuild
@@ -547,3 +577,22 @@ The app writes startup logs to `/media/internal/qupzilla/startup.log` on the dev
 ### Shell Syntax Note
 
 When using `make -j$(nproc)` in scripts, the `$()` syntax may cause issues. Use a fixed number like `make -j4` instead for reliability.
+
+## Testing Tools
+
+### QupZilla Launcher Test App
+
+A simple Enyo app for testing URL launch parameters is available at `~/Projects/qupzilla-launcher/`. It calls `palm://com.palm.applicationManager/launch` with URL parameters to verify the launch URL feature works.
+
+**To rebuild and install:**
+```bash
+cd ~/Projects/qupzilla-launcher
+palm-package .
+palm-install com.test.qupzillalauncher_1.0.0_all.ipk
+palm-launch com.test.qupzillalauncher
+```
+
+**Creating new Enyo test apps:**
+```bash
+palm-generate -t enyo_singlepane -p "{'id':'com.test.myapp', 'title':'My App'}" ~/Projects/myapp
+```
