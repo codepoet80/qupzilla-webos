@@ -34,6 +34,7 @@ AboutDialog::AboutDialog(QWidget* parent)
 
     ui->setupUi(this);
     ui->label->setPixmap(QIcon(QSL(":icons/other/about.png")).pixmap(300, 130));
+    ui->textBrowser->setStyleSheet("QTextBrowser { background-color: #2d2d2d; color: #e0e0e0; }");
 
     connect(ui->buttonBox, SIGNAL(clicked(QAbstractButton*)), this, SLOT(close()));
     connect(ui->authorsButton, SIGNAL(clicked()), this, SLOT(buttonClicked()));
