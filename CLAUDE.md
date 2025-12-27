@@ -195,7 +195,7 @@ if (currentIndex() == index && webTab->webView()) {
 }
 ```
 
-**Critical**: Do NOT call full `currentTabChanged()` here. That function includes `setTabOrder()` which crashes during early Qt initialization. Only call what's needed: `navigationBar()->setCurrentView()`.
+**Critical**: Do NOT call full `currentTabChanged()` here. Additionally, `setTabOrder()` has been completely disabled in PORTABLE_BUILD (see item 4 in "Things That Break the App") because it crashes during any tab switch, not just early initialization.
 
 ### 10. Qt Signal/Slot Gotchas
 
@@ -384,7 +384,7 @@ The following have been tested and cause crashes or hangs. **NEVER use these**:
 
 3. **Killing processes with `pgrep -f` patterns**: The pattern matching is too broad and can match unrelated processes or cause false positives.
 
-4. **Calling `setTabOrder()` during early initialization**: Qt's `setTabOrder()` function crashes if called before widgets are fully initialized. This particularly affects deferred/async code paths. If you need to call functions that include `setTabOrder()` from a deferred context, either skip the tab order setup or ensure all widgets are fully ready.
+4. **Calling `setTabOrder()` during tab switching (PORTABLE_BUILD)**: Qt's `setTabOrder()` function crashes in PORTABLE_BUILD when opening new tabs. The crash occurs in `BrowserWindow::currentTabChanged()` during the signal cascade triggered by tab creation. The widgets appear valid (non-null pointers) but are in an inconsistent state. **The fix**: Skip `setTabOrder()` entirely in PORTABLE_BUILD using `#ifndef PORTABLE_BUILD` guards in `browserwindow.cpp`. This is acceptable since the TouchPad is a touchscreen device and keyboard Tab navigation order isn't essential.
 
 5. **Using `palm-launch -c` to kill PDK apps**: This command does not work for PDK apps like QupZilla. Use `echo "killall qupzilla" | novacom run file://bin/sh` instead.
 

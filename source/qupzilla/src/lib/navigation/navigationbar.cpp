@@ -614,7 +614,12 @@ void NavigationBar::refreshHistory()
         return;
     }
 
-    QWebEngineHistory* history = m_window->weView()->page()->history();
+    TabbedWebView* view = m_window->weView();
+    if (!view->page()) {
+        return;
+    }
+
+    QWebEngineHistory* history = view->page()->history();
     m_buttonBack->setEnabled(history->canGoBack());
     m_buttonForward->setEnabled(history->canGoForward());
 }

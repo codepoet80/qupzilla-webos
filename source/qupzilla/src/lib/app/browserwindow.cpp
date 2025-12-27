@@ -1012,13 +1012,18 @@ void BrowserWindow::currentTabChanged()
     updateLoadingActions();
 
     // Setting correct tab order (LocationBar -> WebSearchBar -> WebView)
-    // Guard against null pointers during deferred initialization
+    // CRITICAL: setTabOrder() crashes in PORTABLE_BUILD during tab switching.
+    // The crash occurs due to widget state issues during the signal cascade
+    // when opening new tabs. Skip setTabOrder entirely in PORTABLE_BUILD -
+    // it's not essential for touchscreen devices like the TouchPad anyway.
+#ifndef PORTABLE_BUILD
     LocationBar* locBar = locationBar();
     WebSearchBar* searchBar = m_navigationToolbar ? m_navigationToolbar->webSearchBar() : nullptr;
     if (locBar && searchBar && view) {
         setTabOrder(locBar, searchBar);
         setTabOrder(searchBar, view);
     }
+#endif
 }
 
 void BrowserWindow::updateLoadingActions()
